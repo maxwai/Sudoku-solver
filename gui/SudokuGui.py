@@ -54,7 +54,7 @@ class MyWindow(Gtk.Window):
         self.connect("destroy", Gtk.main_quit)
 
         self.fields: dict[Position, Field] = dict()
-        self.sections: dict[int, list[Field]] = dict()
+        self.sections: list[dict[Position, Field]] = list()
 
         main_box = Gtk.Box()
         main_box.set_orientation(Gtk.Orientation.VERTICAL)
@@ -73,7 +73,7 @@ class MyWindow(Gtk.Window):
             child_grid.set_row_spacing(8)
             child_grid.set_column_spacing(8)
 
-            self.sections[j] = list()
+            self.sections.append(dict())
             for i in range(9):
                 entry = DigitEntry()
                 entry.set_input_purpose(Gtk.InputPurpose.DIGITS)
@@ -98,8 +98,9 @@ class MyWindow(Gtk.Window):
                     labels[y + 1] = label
                     small_numbers_grid.attach(label, y % 3, y / 3, 1, 1)
                 child_grid.attach(small_numbers_grid, i % 3, i / 3, 1, 1)
-                self.fields[Position(i % 3 + (j % 3) * 3, int(i / 3) + int(j / 3) * 3)] = Field(entry, labels)
-                self.sections[j].append(entry)
+                field = Field(entry, labels)
+                self.fields[Position(i % 3 + (j % 3) * 3, int(i / 3) + int(j / 3) * 3)] = field
+                self.sections[-1][Position(i % 3 + (j % 3) * 3, int(i / 3) + int(j / 3) * 3)] = field
 
             master_grid.attach(child_grid, j % 3, j / 3, 1, 1)
         main_box.pack_start(master_grid, True, True, 12)
