@@ -3,13 +3,13 @@ import string
 import gi
 
 gi.require_version("Gtk", "3.0")
-from gi.repository import Gtk
+from gi.repository import Gtk, Pango
 
 
 class Position:
     def __init__(self, x: int, y: int):
-        self.x = x
-        self.y = y
+        self.x: int = x
+        self.y: int = y
 
     def __eq__(self, other):
         if isinstance(other, Position):
@@ -21,6 +21,12 @@ class Position:
 
     def __str__(self):
         return f'Position(x={self.x};y={self.y})'
+
+
+class Field:
+    def __init__(self, entry: Gtk.Entry, labels: dict[int, Gtk.Label]):
+        self.entry: Gtk.Entry = entry
+        self.labels: dict[int, Gtk.Label] = labels
 
 
 class DigitEntry(Gtk.Entry, Gtk.Editable):
@@ -47,7 +53,7 @@ class MyWindow(Gtk.Window):
         self.set_default_size(800, 840)
         self.connect("destroy", Gtk.main_quit)
 
-        self.fields: dict[Position, Gtk.Entry] = dict()
+        self.fields: dict[Position, Field] = dict()
 
         main_box = Gtk.Box()
         main_box.set_orientation(Gtk.Orientation.VERTICAL)
@@ -71,24 +77,32 @@ class MyWindow(Gtk.Window):
                 entry.set_max_width_chars(1)
                 entry.set_width_chars(1)
                 entry.props.xalign = 0.5
-                self.fields[Position(i % 3 + (j % 3) * 3, int(i / 3) + int(j / 3) * 3)] = entry
+                pango: Pango.FontDescription = entry.get_pango_context().get_font_description()
+                pango.set_size(pango.get_size() * 2)
+                entry.modify_font(pango)
+
+                #entry.modify_font(Pango.FontDescription('Dejavu Sans Mono 20'))
                 child_grid.attach(entry, i % 3, i / 3, 1, 1)
+
+                labels: dict[int, Gtk.Label] = dict()
 
                 small_numbers_grid = Gtk.Grid()
                 small_numbers_grid.set_row_homogeneous(True)
                 small_numbers_grid.set_column_homogeneous(True)
                 for y in range(9):
                     label = Gtk.Label()
-                    # label.set_text(str(y+1))
+                    label.set_text(str(y+1))
+                    labels[y+1] = label
                     small_numbers_grid.attach(label, y % 3, y / 3, 1, 1)
                 child_grid.attach(small_numbers_grid, i % 3, i / 3, 1, 1)
+                self.fields[Position(i % 3 + (j % 3) * 3, int(i / 3) + int(j / 3) * 3)] = Field(entry, labels)
 
             master_grid.attach(child_grid, j % 3, j / 3, 1, 1)
         main_box.pack_start(master_grid, True, True, 12)
 
-        status = Gtk.Label()
-        status.set_text("Enter Sudoku")
-        main_box.pack_start(status, False, False, 5)
+        self.status = Gtk.Label()
+        self.status.set_text("Enter Sudoku")
+        main_box.pack_start(self.status, False, False, 5)
 
         solve_button = Gtk.Button()
         solve_button.set_label("Solve Sudoku")
@@ -98,7 +112,10 @@ class MyWindow(Gtk.Window):
         self.add(main_box)
 
 
-def show_window(button_press_callback: callable):
+def show_window(button_press_callback: callable) -> tuple[Gtk.Label, dict[Position, Field]]:
     win = MyWindow(button_press_callback)
     win.show_all()
-    Gtk.main()
+    for labels in [label.labels.values() for label in win.fields.values()]:
+        for label in labels:
+            label.set_visible(False)
+    return win.status, win.fields
