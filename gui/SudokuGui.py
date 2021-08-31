@@ -94,7 +94,6 @@ class MyWindow(Gtk.Window):
                 small_numbers_grid.set_column_homogeneous(True)
                 for y in range(9):
                     label = Gtk.Label()
-                    label.set_text(str(y + 1))
                     labels[y + 1] = label
                     small_numbers_grid.attach(label, y % 3, y / 3, 1, 1)
                 child_grid.attach(small_numbers_grid, i % 3, i / 3, 1, 1)
@@ -117,10 +116,8 @@ class MyWindow(Gtk.Window):
         self.add(main_box)
 
 
-def show_window(button_press_callback: callable) -> tuple[Gtk.Label, dict[Position, Field], dict[int, list[Field]]]:
+def show_window(button_press_callback: callable) ->\
+        tuple[Gtk.Label, dict[Position, Field], list[dict[Position, Field]]]:
     win = MyWindow(button_press_callback)
     win.show_all()
-    for labels in [label.labels.values() for label in win.fields.values()]:
-        for label in labels:
-            label.set_visible(False)
     return win.status, win.fields, win.sections
